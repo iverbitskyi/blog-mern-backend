@@ -8,6 +8,7 @@ import { validationResult } from 'express-validator';
 import { registerValidation } from './validations/auth.js';
 
 import UserModel from './models/User.js';
+import checkAuth from './utils/checkAuth.js';
 
 // підключення до бази даних
 mongoose
@@ -104,6 +105,27 @@ app.post('/auth/register', registerValidation, async (req, res) => {
         console.log(err);
         res.status(500).json({
             message: 'Не вдалося зареєструватися',
+        });
+    }
+});
+
+app.get('/auth/me', checkAuth, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+
+        if (!user) {
+            return res.status(404).json({
+                message: 'Користувач не знайдений'
+            });
+        }
+
+        const { passwordHash, ...userData } = user._doc;
+
+        res.json(userData);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            message: 'Немає доступу',
         });
     }
 });
